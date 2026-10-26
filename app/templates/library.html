@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Library{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Audio Library</h1>
+  <button class="btn primary" onclick="toggle('upload')">+ Upload audio</button>
+</div>
+
+<div id="upload" class="card hidden">
+  <h2>Upload an audio file</h2>
+  <form method="post" action="{{ url_for('library_upload') }}" enctype="multipart/form-data" class="form-row">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <label class="grow">Title (optional)
+      <input name="title" placeholder="Leave blank to use file name">
+    </label>
+    <label class="grow">File
+      <input type="file" name="file" accept="audio/*,video/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.opus,.mp4,.mkv,.webm,.mov,.m4v" required>
+    </label>
+    <button class="btn primary">Upload</button>
+  </form>
+  <p class="muted sm">Tip: use the <a href="{{ url_for('youtube_page') }}">YouTube</a> tab to grab audio from a link.</p>
+</div>
+
+{% if audio %}
+<div class="grid tracks">
+  {% for a in audio %}
+  <div class="card track">
+    <div class="track-head">
+      <div>
+        <div class="track-title">{{ a.title }}{% if a.kind == 'video' %} <span class="tag ok">📺 Video</span>{% endif %}</div>
+        <div class="muted sm">
+          {{ a.source }}{% if a.duration_seconds %} · {{ a.duration_seconds | dur }}{% endif %}
+          {% if a.source_url %} · <a href="{{ a.source_url }}" target="_blank" rel="noopener">source</a>{% endif %}
+        </div>
+      </div>
+      {% if a.source != 'builtin' %}
+      <form method="post" action="{{ url_for('library_delete') }}" class="inline"
+            onsubmit="return confirm('Delete “{{ a.title }}”?')">
+        <input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <input type="hidden" name="id" value="{{ a.id }}">
+        <button class="btn ghost sm danger-text">Delete</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if a.kind == 'video' %}
+    <video controls preload="none" class="track-video" src="{{ url_for('audio_file', aid=a.id) }}"></video>
+    {% else %}
+    <audio controls preload="none" src="{{ url_for('audio_file', aid=a.id) }}"></audio>
+    {% endif %}
+
+    <div class="track-actions">
+      <button class="btn ok sm" onclick="playOnDevice({{ a.id }})">{{ '📺 Play on TV' if a.kind == 'video' else '▶ Play on soundbar' }}</button>
+      <form class="inline rename" method="post" action="{{ url_for('library_rename') }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <input type="hidden" name="id" value="{{ a.id }}">
+        <input name="title" value="{{ a.title }}" class="rename-input">
+        <button class="btn ghost sm">Rename</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><p class="muted">No audio yet. Upload a file or use the YouTube tab.</p></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}YouTube{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Get audio from YouTube</h1></div>
+
+<div class="card">
+  <p class="muted">Paste a YouTube (or other video) link. It downloads on the device as MP3 and lands in your Library, where you can preview it and assign it to a schedule.</p>
+  <div class="form-row">
+    <label class="grow">Video URL
+      <input id="yt-url" placeholder="https://www.youtube.com/watch?v=..." autofocus>
+    </label>
+    <label>Download as
+      <select id="yt-kind">
+        <option value="audio">Audio only (MP3)</option>
+        <option value="video">Video + audio (MP4)</option>
+      </select>
+    </label>
+    <button class="btn primary" id="yt-go" onclick="startYoutube()">Download</button>
+  </div>
+
+  <div id="yt-status" class="yt-status hidden">
+    <span class="spinner"></span>
+    <span id="yt-msg">Starting…</span>
+  </div>
+
+  <div id="yt-done" class="yt-done hidden">
+    <div class="ok-banner">✓ <strong id="yt-title"></strong> saved to your library.</div>
+    <audio id="yt-audio" controls preload="none"></audio>
+    <video id="yt-video" controls preload="none" class="track-video hidden"></video>
+    <div class="track-actions">
+      <button class="btn ok sm" id="yt-play">▶ Play on device</button>
+      <a class="btn ghost sm" href="{{ url_for('library') }}">Open Library →</a>
+      <a class="btn ghost sm" href="{{ url_for('schedules') }}">Assign to a schedule →</a>
+    </div>
+  </div>
+
+  <div id="yt-error" class="flash error hidden"></div>
+</div>
+
+<div class="card">
+  <h2 class="sm-h">Notes</h2>
+  <ul class="muted bullets">
+    <li>Downloading is for audio you have the right to use on your own device.</li>
+    <li>If a download fails after a YouTube change, update the downloader (Settings shows the command).</li>
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Settings</h1></div>
+
+<div class="grid two">
+  {% if is_admin %}
+  <div class="card">
+    <h2>Audio &amp; schedule</h2>
+    <form method="post">
+      <input type="hidden" name="csrf" value="{{ csrf_token }}">
+      <input type="hidden" name="form" value="audio">
+      <label>ALSA output device
+        <input name="audio_device" value="{{ audio_device }}">
+      </label>
+      <p class="muted sm">Current soundbar: <span class="mono">plughw:CARD=vc4hdmi0,DEV=0</span></p>
+      <div class="form-row">
+        <label>Default volume (0–100)
+          <input type="number" name="default_volume" min="0" max="100" value="{{ default_volume }}">
+        </label>
+        <label>HDMI wake pre-roll (sec)
+          <input type="number" name="preroll_seconds" min="0" max="10" value="{{ preroll_seconds }}">
+        </label>
+      </div>
+      <label>Timezone
+        <input name="timezone" value="{{ timezone }}">
+      </label>
+      <h2 class="sm-h" style="margin-top:16px">TV screens</h2>
+      <label class="chk"><input type="checkbox" name="idle_screen" {{ 'checked' if idle_screen else '' }}> Show the clock when nothing is playing</label>
+      <label class="chk" style="margin-top:8px"><input type="checkbox" name="playing_screen" {{ 'checked' if playing_screen else '' }}> Show “now playing” during audio-only sessions</label>
+      <p class="muted sm">Unticked screens stay plain black. Videos always play full screen.</p>
+      <div class="form-row">
+        <label>Drift speed (px/sec)
+          <input type="number" name="display_speed" min="2" max="120" value="{{ display_speed }}">
+        </label>
+        <label>Motion smoothness (updates/sec)
+          <input type="number" name="display_hz" min="10" max="60" value="{{ display_hz }}">
+        </label>
+      </div>
+      <label class="chk"><input type="checkbox" name="night_mode" {{ 'checked' if night_mode else '' }}> Black screen at night (burn-in protection)</label>
+      <div class="form-row" style="margin-top:8px">
+        <label>Night starts (hour 0–23)
+          <input type="number" name="night_start" min="0" max="23" value="{{ night_start }}">
+        </label>
+        <label>Night ends (hour 0–23)
+          <input type="number" name="night_end" min="0" max="23" value="{{ night_end }}">
+        </label>
+      </div>
+      <p class="muted sm">Lower speed = slower drift. Takes effect within a few seconds, no restart needed.</p>
+      <h2 class="sm-h" style="margin-top:16px">Video output (TV)</h2>
+      <div class="form-row">
+        <label>DRM device
+          <input name="drm_device" value="{{ drm_device }}">
+        </label>
+        <label>Connector
+          <input name="drm_connector" value="{{ drm_connector }}">
+        </label>
+        <label>Output mode
+          <input name="drm_mode" value="{{ drm_mode }}" placeholder="1920x1080">
+        </label>
+      </div>
+      <button class="btn primary">Save</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Change password</h2>
+    <form method="post">
+      <input type="hidden" name="csrf" value="{{ csrf_token }}">
+      <input type="hidden" name="form" value="password">
+      <label>Current password
+        <input type="password" name="current" autocomplete="current-password" required>
+      </label>
+      <label>New password
+        <input type="password" name="new" autocomplete="new-password" required>
+      </label>
+      <label>Confirm new password
+        <input type="password" name="confirm" autocomplete="new-password" required>
+      </label>
+      <button class="btn primary">Update password</button>
+    </form>
+  </div>
+</div>
+
+{% if not is_admin %}
+<div class="card">
+  <p class="muted">System settings (audio, video, timezone and maintenance) are managed by an administrator. You can change your own password above.</p>
+</div>
+{% endif %}
+
+{% if is_admin %}
+<div class="card">
+  <h2 class="sm-h">Maintenance</h2>
+  <p class="muted">Update the YouTube downloader (run on the Pi over SSH):</p>
+  <pre class="code">/home/ubuntu/audio-portal/venv/bin/pip install -U yt-dlp &amp;&amp; sudo systemctl restart audio-portal</pre>
+  <p class="muted">Restart the service:</p>
+  <pre class="code">sudo systemctl restart audio-portal</pre>
+  <p class="muted">View logs:</p>
+  <pre class="code">journalctl -u audio-portal -f</pre>
+</div>
+{% endif %}
+{% endblock %}

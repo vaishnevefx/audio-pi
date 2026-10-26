@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.class
+venv/
+.env
+data/*.db
+data/secret_key
+data/INITIAL_ADMIN_PASSWORD.txt
+data/audio/*
+data/screen/*.png
+data/mpv.log
+data/mpv.sock
+.DS_Store

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <div class="clock"><span id="dev-clock">{{ now_local }}</span> &middot; <span class="muted">{{ tz }}</span></div>
+</div>
+
+<div class="grid cards">
+  <div class="card stat">
+    <div class="stat-num" id="stat-state">{{ 'Playing' if player_status.playing else 'Idle' }}</div>
+    <div class="stat-label">Player</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-num">{{ n_sched }}</div>
+    <div class="stat-label">Active schedules</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-num">{{ n_audio }}</div>
+    <div class="stat-label">Audio tracks</div>
+  </div>
+</div>
+
+<div class="card volume-card">
+  <div class="vc-head">
+    <h2>Output volume</h2>
+    <button id="mute-btn" class="btn {{ 'danger' if muted else 'ghost' }} sm" onclick="toggleMute()">
+      {{ '🔇 Muted' if muted else '🔊 Mute' }}
+    </button>
+  </div>
+  <div class="vc-row">
+    <button class="btn ghost vol-step" onclick="stepVolume(-5)" title="Quieter">&minus;</button>
+    <input type="range" id="vol-range" min="0" max="100" step="1" value="{{ master_volume }}"
+           oninput="onVolInput(this.value)" onchange="onVolCommit(this.value)">
+    <button class="btn ghost vol-step" onclick="stepVolume(5)" title="Louder">&plus;</button>
+    <span id="vol-pct" class="vol-pct">{{ master_volume }}%</span>
+  </div>
+  <p class="muted sm">Each change plays a short tone on the soundbar so you can hear that level. This master level applies to all scheduled and manual playback.</p>
+</div>
+
+<div class="grid two">
+  <div class="card">
+    <h2>Upcoming sessions</h2>
+    {% if next_runs %}
+    <ul class="runs">
+      {% for r in next_runs %}
+      <li>
+        <span class="when">{{ r.when.strftime('%a %d %b · %H:%M') }}</span>
+        <span class="rname">{{ r.name }}</span>
+        {% if r.assigned %}
+          <span class="tag ok">{{ r.audio_title }}</span>
+        {% else %}
+          <span class="tag warn">No audio assigned</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No enabled schedules yet.</p>
+    {% endif %}
+    <a class="btn ghost sm" href="{{ url_for('schedules') }}">Manage schedules →</a>
+  </div>
+
+  <div class="card">
+    <h2>Recent activity</h2>
+    {% if recent %}
+    <table class="tbl">
+      <thead><tr><th>Time</th><th>Track</th><th>Trigger</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for r in recent %}
+      <tr>
+        <td class="nowrap">{{ r.started_at | localtime }}</td>
+        <td>{{ r.title or '—' }}</td>
+        <td>{{ r.trigger or '—' }}</td>
+        <td><span class="tag {{ 'ok' if r.status in ('done','playing') else ('warn' if r.status=='stopped' else 'err') }}">{{ r.status }}</span></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">Nothing has played yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

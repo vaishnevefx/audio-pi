@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf" content="{{ csrf_token }}">
+<title>{% block title %}Audio Portal{% endblock %} · Pi Audio Portal</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+{% if current_user %}
+<header class="topbar">
+  <div class="brand"><span class="logo">◉</span> Audio&nbsp;Portal</div>
+  <nav class="tabs">
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint=='dashboard' else '' }}">Dashboard</a>
+    <a href="{{ url_for('schedules') }}" class="{{ 'active' if request.endpoint=='schedules' else '' }}">Schedules</a>
+    <a href="{{ url_for('library') }}" class="{{ 'active' if request.endpoint=='library' else '' }}">Library</a>
+    <a href="{{ url_for('youtube_page') }}" class="{{ 'active' if request.endpoint=='youtube_page' else '' }}">YouTube</a>
+    <a href="{{ url_for('settings') }}" class="{{ 'active' if request.endpoint=='settings' else '' }}">Settings</a>
+  </nav>
+  <div class="user">
+    <span class="who">{{ current_user }}</span>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf" value="{{ csrf_token }}">
+      <button class="btn ghost sm">Logout</button>
+    </form>
+  </div>
+</header>
+
+<div id="nowplaying" class="nowplaying{{ ' on' if player_status.playing else '' }}">
+  <span class="pulse"></span>
+  <div class="np-text">
+    <strong id="np-title">{{ player_status.title or '' }}</strong>
+    <span id="np-sub">{{ player_status.trigger or '' }}</span>
+  </div>
+  <span id="np-remaining" class="np-remaining"></span>
+  <button class="btn danger sm" onclick="stopPlayback()">■ Stop</button>
+</div>
+{% endif %}
+
+<main class="container">
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

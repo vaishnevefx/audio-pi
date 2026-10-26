@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Schedules{% endblock %}
+
+{% macro sched_form(s) %}
+<form method="post" action="{{ url_for('schedules_save') }}" class="sched-form">
+  <input type="hidden" name="csrf" value="{{ csrf_token }}">
+  {% if s %}<input type="hidden" name="id" value="{{ s.id }}">{% endif %}
+  <div class="form-row">
+    <label class="grow">Name
+      <input name="name" value="{{ s.name if s else '' }}" placeholder="Focus Time" required>
+    </label>
+    <label>Start time
+      <input type="time" name="start_time" value="{{ s.start_time if s else '10:00' }}" required>
+    </label>
+    <label>Duration (min)
+      <input type="number" name="minutes" min="1" max="600"
+             value="{{ (s.duration_seconds // 60) if s else 30 }}" required>
+    </label>
+  </div>
+  <div class="form-row">
+    <label class="grow">📺 Video (TV)
+      <select name="video_id">
+        <option value="">— None —</option>
+        {% for v in videos %}
+        <option value="{{ v.id }}" {{ 'selected' if s and s.video_id==v.id else '' }}>
+          {{ v.title }}{% if v.duration_seconds %} ({{ v.duration_seconds | dur }}){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="grow">🔊 Audio (soundbar)
+      <select name="audio_id">
+        <option value="">— None —</option>
+        {% for a in audios %}
+        <option value="{{ a.id }}" {{ 'selected' if s and s.audio_id==a.id else '' }}>
+          {{ a.title }}{% if a.duration_seconds %} ({{ a.duration_seconds | dur }}){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Volume
+      <input type="number" name="volume" min="0" max="100"
+             value="{{ s.volume if s else 80 }}">
+    </label>
+  </div>
+  <div class="form-row days">
+    <span class="lbl">Days</span>
+    {% set sel = (s.days.split(',') if s else ['1','2','3','4','5']) %}
+    {% for num, nm in day_names.items() %}
+      <label class="chk"><input type="checkbox" name="days" value="{{ num }}"
+        {{ 'checked' if (num|string) in sel else '' }}> {{ nm }}</label>
+    {% endfor %}
+  </div>
+  <div class="form-row">
+    <label class="chk"><input type="checkbox" name="loop" {{ 'checked' if (s.loop if s else 1) else '' }}> Loop to fill duration</label>
+    <label class="chk"><input type="checkbox" name="mute_video_audio" {{ 'checked' if (s.mute_video_audio if s else 1) else '' }}> Mute video’s own audio</label>
+    <label class="chk"><input type="checkbox" name="enabled" {{ 'checked' if (s.enabled if s else 1) else '' }}> Enabled</label>
+    <div class="grow"></div>
+    <button class="btn primary">{{ 'Save changes' if s else 'Create schedule' }}</button>
+  </div>
+  <p class="muted sm">Pick a video (shown on the TV), an audio track (played on the soundbar), or both. When both are set, the video’s own sound is muted by default so you hear the audio track — uncheck “Mute video’s own audio” to use the video’s sound instead.</p>
+</form>
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Schedules</h1>
+  <button class="btn primary" onclick="toggle('new-sched')">+ New schedule</button>
+</div>
+
+<div id="new-sched" class="card hidden">
+  <h2>New schedule</h2>
+  {{ sched_form(None) }}
+</div>
+
+{% if schedules %}
+<div class="card">
+<table class="tbl schedules">
+  <thead>
+    <tr><th>Time</th><th>Name</th><th>Audio</th><th>Days</th><th>Length</th><th>Vol</th><th>State</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for s in schedules %}
+    <tr>
+      <td class="mono big">{{ s.start_time }}</td>
+      <td>{{ s.name }}</td>
+      <td>
+        {% if s.video_title %}<span class="tag ok">📺 {{ s.video_title }}</span>{% endif %}
+        {% if s.video_title and s.audio_title %}<br>{% endif %}
+        {% if s.audio_title %}<span class="muted sm">🔊 {{ s.audio_title }}</span>{% endif %}
+        {% if not s.video_title and not s.audio_title %}<span class="tag warn">unassigned</span>{% endif %}
+      </td>
+      <td class="mono">{% set sd = s.days.split(',') %}{% for num, nm in day_names.items() %}<span class="d {{ 'on' if (num|string) in sd else '' }}">{{ nm[0] }}</span>{% endfor %}</td>
+      <td>{{ s.duration_seconds | dur }}</td>
+      <td>{{ s.volume }}</td>
+      <td>
+        <form method="post" action="{{ url_for('schedules_toggle') }}" class="inline">
+          <input type="hidden" name="csrf" value="{{ csrf_token }}">
+          <input type="hidden" name="id" value="{{ s.id }}">
+          <button class="pill {{ 'on' if s.enabled else 'off' }}">{{ 'On' if s.enabled else 'Off' }}</button>
+        </form>
+      </td>
+      <td class="actions">
+        <button class="btn ghost sm" onclick="toggle('edit-{{ s.id }}')">Edit</button>
+        <form method="post" action="{{ url_for('schedules_delete') }}" class="inline"
+              onsubmit="return confirm('Delete this schedule?')">
+          <input type="hidden" name="csrf" value="{{ csrf_token }}">
+          <input type="hidden" name="id" value="{{ s.id }}">
+          <button class="btn ghost sm danger-text">Delete</button>
+        </form>
+      </td>
+    </tr>
+    <tr id="edit-{{ s.id }}" class="hidden edit-row">
+      <td colspan="8">{{ sched_form(s) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="card"><p class="muted">No schedules yet. Create one above.</p></div>
+{% endif %}
+{% endblock %}

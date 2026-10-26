@@ -1,0 +1,21 @@
+[Unit]
+Description=Pi Audio Portal (scheduler + dashboard)
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+SupplementaryGroups=audio video render
+WorkingDirectory=/home/ubuntu/audio-portal
+ExecStart=/home/ubuntu/audio-portal/venv/bin/python /home/ubuntu/audio-portal/run.py
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=3
+# Give the process a moment to stop any active playback on shutdown/restart
+TimeoutStopSec=15
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
